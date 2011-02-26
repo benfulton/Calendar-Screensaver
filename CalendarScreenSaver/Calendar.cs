@@ -13,7 +13,7 @@ using CalendarScreenSaver.Properties;
 
 namespace CalendarScreenSaver
 {
-    public partial class Calendar : Form
+    public partial class Calendar : Form, ICalendarView
     {
         private CalendarController _Controller;
 
@@ -29,10 +29,8 @@ namespace CalendarScreenSaver
                 row.Height = 110;
             }
 
-            _Controller = new CalendarController(DateTime.Today);
-            _Controller.Initialize(this);
-
-            RefreshFeed();
+            _Controller = new CalendarController(new CalendarService(new Settings()));
+            _Controller.Initialize(this, DateTime.Today);
 
             gridCalendar.ClearSelection();
         }
@@ -51,7 +49,7 @@ namespace CalendarScreenSaver
         {
             var firstDay = gridCalendar.Rows[0].Cells[0].Value as DayInfo;
             int index = (int)(date.Date - firstDay.date).TotalDays;
-            if (index < 41)
+            if (index >= 0 && index < 41)
             {
                 var info = gridCalendar.Rows[index / 7].Cells[index % 7].Value as DayInfo;
                 string formatted = isAllDay ? "" : date.ToShortTimeString() + ": ";
@@ -74,57 +72,9 @@ namespace CalendarScreenSaver
             e.CellStyle.WrapMode = DataGridViewTriState.True;
         }
 
-        ArrayList entryList;
-
-        private void RefreshFeed()
+        public void StartTimer()
         {
-            var settings = new Settings();
-            string calendarURI = settings.CalendarURI;
-            string userName = settings.Username;
-            string passWord = settings.Password;
-
-            this.entryList = new ArrayList(50);
-            ArrayList dates = new ArrayList(50);
-            EventQuery query = new EventQuery();
-           // query.SingleEvents = true;
-            CalendarService service = new CalendarService("CalendarScreenSaver");
-
-            if (userName != null && userName.Length > 0)
-            {
-                service.setUserCredentials(userName, passWord);
-            }
-
-            // only get event's for today - 1 month until today + 1 year
-
-            query.Uri = new Uri(calendarURI);
-
-            query.StartTime = DateTime.Now.AddDays(-28);
-            query.EndTime = DateTime.Now.AddMonths(1);
-
-
-            EventFeed calFeed = service.Query(query) as EventFeed;
-
-            // now populate the calendar
-            while (calFeed != null && calFeed.Entries.Count > 0)
-            {
-                var items = calFeed.Entries.Cast<EventEntry>()
-                    .SelectMany(entry => entry.Times, (e, t) => new { e.Title.Text, t.StartTime, t.AllDay })
-                    .OrderBy(w => w.StartTime);
-
-                foreach (var item in items)
-                {
-                    AddEvent(item.StartTime, item.Text, item.AllDay);                    
-                }
-                    
-                // just query the same query again.
-                if (calFeed.NextChunk != null)
-                {
-                    query.Uri = new Uri(calFeed.NextChunk);
-                    calFeed = service.Query(query) as EventFeed;
-                }
-                else
-                    calFeed = null;
-            }
+            timer1.Start();
         }
 
         private void Calendar_Load(object sender, EventArgs e)
@@ -163,12 +113,17 @@ namespace CalendarScreenSaver
 
         #endregion
 
+        private void timer1_Tick(object sender, EventArgs e)
+        {
+            _Controller.TimerFired(this);
+        }
+
 
     }
 
     public class DayInfo
     {
         public DateTime date;
-        public List<string> eventList;
+        public List<string> eventList = new List<string>();
     }
 }

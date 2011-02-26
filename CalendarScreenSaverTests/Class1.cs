@@ -4,24 +4,84 @@ using System.Linq;
 using System.Text;
 using Xunit;
 using CalendarScreenSaver;
+using System.Drawing;
 
 namespace CalendarScreenSaverTests
 {
     public class Class1
     {
         [Fact]
-        public void foo()
+        public void Calendar_rows_are_created_properly()
         {
-            CalendarController newfoo = new CalendarController(DateTime.Parse("1/1/11"));
-            var row1 = newfoo.GetRow(0);
-            Assert.Equal("26", row1[0].ToString());
-            Assert.Equal("1", row1[6].ToString());
+            CalendarController controller = new CalendarController(new MockService());
+            controller.Initialize(new MockView(), DateTime.Parse("1/1/11"));
+            var row1 = controller.GetRow(0);
+            Assert.Equal( DateTime.Parse("12/26/10"), row1[0]);
+            Assert.Equal(DateTime.Parse("1/1/11"), row1[6]);
 
-            var row2 = newfoo.GetRow(1);
-            Assert.Equal("2", row2[0].ToString());
-            Assert.Equal("8", row2[6].ToString());
+            var row2 = controller.GetRow(1);
+            Assert.Equal(DateTime.Parse("1/2/11"), row2[0]);
+            Assert.Equal(DateTime.Parse("1/8/11"), row2[6]);
 
-            Assert.Null(newfoo.GetRow(6));
+            Assert.Null(controller.GetRow(6));
         }
+
+        [Fact]
+        public void Todays_date_is_colored_differently()
+        {
+            Color todayColor, yesterdayColor;
+            CalendarController controller = new CalendarController(new MockService());
+            controller.Initialize(new MockView(), DateTime.Today);
+            controller.FormatCell(new DayInfo { date = DateTime.Today }, out todayColor);
+            controller.FormatCell(new DayInfo { date = DateTime.Today.AddDays(-1) }, out yesterdayColor);
+            Assert.NotEqual(todayColor, yesterdayColor);
+        }
+
+        public class MockService : ICalendarService
+        {
+            #region ICalendarService Members
+
+            public Google.GData.Calendar.EventFeed QueryData(DateTime start, DateTime end)
+            {
+                return new Google.GData.Calendar.EventFeed(null,null);
+            }
+
+            public Google.GData.Calendar.EventFeed Next(Google.GData.Calendar.EventFeed calFeed)
+            {
+                return null;
+            }
+
+            #endregion
+        }
+
+        public class MockView : ICalendarView
+        {
+            #region ICalendarView Members
+
+            public void SetMonth(string month)
+            {
+            }
+
+            public void SetDate(int row, int col, DayInfo info)
+            {
+            }
+
+            public void AddEvent(DateTime date, string text, bool isAllDay)
+            {
+                throw new NotImplementedException();
+            }
+
+            public void DimCell(int row, int column)
+            {
+                throw new NotImplementedException();
+            }
+
+            public void StartTimer()
+            {
+            }
+
+            #endregion
+        }
+
     }
 }

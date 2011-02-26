@@ -29,6 +29,7 @@ namespace CalendarScreenSaver
         /// </summary>
         private void InitializeComponent()
         {
+            this.components = new System.ComponentModel.Container();
             System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle1 = new System.Windows.Forms.DataGridViewCellStyle();
             System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle2 = new System.Windows.Forms.DataGridViewCellStyle();
             this.gridCalendar = new System.Windows.Forms.DataGridView();
@@ -40,6 +41,7 @@ namespace CalendarScreenSaver
             this.Friday = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.Saturday = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.lblMonthName = new System.Windows.Forms.Label();
+            this.timer1 = new System.Windows.Forms.Timer(this.components);
             ((System.ComponentModel.ISupportInitialize)(this.gridCalendar)).BeginInit();
             this.SuspendLayout();
             // 
@@ -146,6 +148,11 @@ namespace CalendarScreenSaver
             this.lblMonthName.TabIndex = 1;
             this.lblMonthName.Text = "January 2011";
             // 
+            // timer1
+            // 
+            this.timer1.Interval = 5000;
+            this.timer1.Tick += new System.EventHandler(this.timer1_Tick);
+            // 
             // Calendar
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -179,6 +186,7 @@ namespace CalendarScreenSaver
         private DataGridViewTextBoxColumn Friday;
         private DataGridViewTextBoxColumn Saturday;
         private Label lblMonthName;
+        private Timer timer1;
     }
 }
 
