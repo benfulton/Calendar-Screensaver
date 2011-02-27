@@ -23,18 +23,21 @@ namespace CalendarScreenSaver
 
             this.Bounds = bounds;
 
-            gridCalendar.Rows.Add(6);
-            foreach (DataGridViewRow row in gridCalendar.Rows)
-            {
-                row.Height = 110;
-            }
-
             _Controller = new CalendarController(new CalendarService(new Settings()));
             _Controller.Initialize(this, DateTime.Today);
 
             gridCalendar.ClearSelection();
         }
 
+        public void Clear()
+        {
+            gridCalendar.Rows.Clear();
+            gridCalendar.Rows.Add(6);
+            foreach (DataGridViewRow row in gridCalendar.Rows)
+            {
+                row.Height = 110;
+            }
+        }
         public void SetMonth(string month)
         {
             lblMonthName.Text = month;

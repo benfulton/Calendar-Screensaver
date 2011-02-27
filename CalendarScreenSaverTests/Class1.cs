@@ -37,6 +37,19 @@ namespace CalendarScreenSaverTests
             Assert.NotEqual(todayColor, yesterdayColor);
         }
 
+        [Fact]
+        public void Timer_Firing_Alternates_this_month_and_next_month()
+        {
+            CalendarController controller = new CalendarController(new MockService());
+            MockView view = new MockView();
+            controller.Initialize(view, DateTime.Parse("1/1/11"));
+            Assert.Contains("January 2011", view._month);
+            controller.TimerFired(view);
+            Assert.Equal( "February 2011", view._month);
+            controller.TimerFired(view);
+            Assert.Contains("January 2011", view._month);
+        }
+
         public class MockService : ICalendarService
         {
             #region ICalendarService Members
@@ -56,10 +69,17 @@ namespace CalendarScreenSaverTests
 
         public class MockView : ICalendarView
         {
+            public string _month;
+
             #region ICalendarView Members
+
+            public void Clear()
+            {
+            }
 
             public void SetMonth(string month)
             {
+                _month = month;
             }
 
             public void SetDate(int row, int col, DayInfo info)

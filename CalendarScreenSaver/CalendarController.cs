@@ -9,6 +9,7 @@ namespace CalendarScreenSaver
 {
     public interface ICalendarView
     {
+        void Clear();
         void SetMonth(string month);
         void SetDate(int row, int col, DayInfo info);
         void AddEvent(DateTime date, string text, bool isAllDay);
@@ -19,6 +20,7 @@ namespace CalendarScreenSaver
     public class CalendarController
     {
         private DateTime _DateMonth;
+        private DateTime _InitialDate;
         private ICalendarService _Service;
         public CalendarController(ICalendarService service)
         {
@@ -42,7 +44,7 @@ namespace CalendarScreenSaver
             return Enumerable.Range(0, 7).Select(i => firstDayOfWeek.AddDays(i)/*.Day.ToString()*/).ToArray();
         }
 
-        public void Initialize(ICalendarView cal, DateTime dateMonth)
+        private void Refresh(ICalendarView cal, DateTime dateMonth)
         {
             _DateMonth = dateMonth;
 
@@ -50,17 +52,25 @@ namespace CalendarScreenSaver
 
             var firstDayOfWeek = LastSunday(firstDay);
 
+            cal.Clear();
+
             for (int i = 0; i < 6; i++)
             {
                 for (int j = 0; j < 7; j++)
                 {
-                    cal.SetDate(i, j, new DayInfo { date = firstDayOfWeek.AddDays(i * 7 + j), eventList = new List<string>() });
+                    cal.SetDate(i, j, new DayInfo { date = firstDayOfWeek.AddDays(i * 7 + j) });
                 }
             }
 
             cal.SetMonth(firstDay.ToString("MMMM yyyy"));
 
             RefreshFeed(cal);
+        }
+
+        public void Initialize(ICalendarView cal, DateTime dateMonth)
+        {
+            _InitialDate = dateMonth;
+            Refresh(cal, dateMonth);
         }
 
         public string FormatCell(DayInfo info, out Color color)
@@ -99,8 +109,10 @@ namespace CalendarScreenSaver
 
         public void TimerFired(ICalendarView calendar)
         {
-            Initialize(calendar, DateTime.Today.AddMonths(1));
-            RefreshFeed(calendar);
+            int addMonths = 0;
+            if (_InitialDate.Month == _DateMonth.Month)
+                addMonths = 1;
+            Refresh(calendar, _InitialDate.AddMonths(addMonths));
         }
 
     }
