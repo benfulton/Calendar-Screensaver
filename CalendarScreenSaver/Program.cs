@@ -22,11 +22,16 @@ namespace CalendarScreenSaver
 
         static void ShowScreenSaver()
         {
+#if false //DEBUG
+            Calendar screensaver = new Calendar(new Rectangle(10, 10, 500, 500));
+            screensaver.Show();
+#else
             foreach (Screen screen in Screen.AllScreens)
             {
                 Calendar screensaver = new Calendar(screen.Bounds);
                 screensaver.Show();
-            }          
+            }
+#endif
         }
 
         static void DispatchArgs(string[] args)

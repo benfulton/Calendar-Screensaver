@@ -8,7 +8,7 @@ using System.Drawing;
 
 namespace CalendarScreenSaverTests
 {
-    public class Class1
+    public class CalendarControllerTests
     {
         [Fact]
         public void Calendar_rows_are_created_properly()
@@ -47,7 +47,9 @@ namespace CalendarScreenSaverTests
             controller.TimerFired(view);
             Assert.Equal( "February 2011", view._month);
             controller.TimerFired(view);
-            Assert.Contains("January 2011", view._month);
+            Assert.Equal(CalendarMode.Day, view.Mode);
+            controller.TimerFired(view);
+            Assert.Contains("Tomorrow's Agenda", view._month);
         }
 
         public class MockService : ICalendarService
@@ -77,10 +79,12 @@ namespace CalendarScreenSaverTests
             {
             }
 
-            public void SetMonth(string month)
+            public void SetTitle(string month)
             {
                 _month = month;
             }
+
+            public CalendarMode Mode { get; set; }
 
             public void SetDate(int row, int col, DayInfo info)
             {
@@ -98,6 +102,16 @@ namespace CalendarScreenSaverTests
 
             public void StartTimer()
             {
+            }
+
+            #endregion
+
+            #region ICalendarView Members
+
+
+            public void AddAgendaItem(DateTime dateTime, string text, bool isAllDay)
+            {
+
             }
 
             #endregion

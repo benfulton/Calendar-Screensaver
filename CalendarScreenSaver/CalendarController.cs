@@ -7,14 +7,19 @@ using Google.GData.Calendar;
 
 namespace CalendarScreenSaver
 {
+    public enum CalendarMode { Month, Day };
+
     public interface ICalendarView
     {
         void Clear();
-        void SetMonth(string month);
-        void SetDate(int row, int col, DayInfo info);
+        void SetTitle(string title);
         void AddEvent(DateTime date, string text, bool isAllDay);
+        void SetDate(int i, int j, DayInfo info);
         void DimCell(int row, int column);
         void StartTimer();
+        CalendarMode Mode { get; set; }
+
+        void AddAgendaItem(DateTime dateTime, string text, bool isAllDay);
     }
 
     public class CalendarController
@@ -44,33 +49,45 @@ namespace CalendarScreenSaver
             return Enumerable.Range(0, 7).Select(i => firstDayOfWeek.AddDays(i)/*.Day.ToString()*/).ToArray();
         }
 
-        private void Refresh(ICalendarView cal, DateTime dateMonth)
+        private void Refresh(ICalendarView cal, CalendarData data)
         {
-            _DateMonth = dateMonth;
+            _DateMonth = data.date;
+            cal.Mode = data.mode;
 
             var firstDay = new DateTime(_DateMonth.Year, _DateMonth.Month, 1);
 
-            var firstDayOfWeek = LastSunday(firstDay);
 
             cal.Clear();
 
-            for (int i = 0; i < 6; i++)
+            if (data.mode == CalendarMode.Month)
             {
-                for (int j = 0; j < 7; j++)
+                var firstDayOfWeek = LastSunday(firstDay);
+
+                for (int i = 0; i < 6; i++)
                 {
-                    cal.SetDate(i, j, new DayInfo { date = firstDayOfWeek.AddDays(i * 7 + j) });
+                    for (int j = 0; j < 7; j++)
+                    {
+                        cal.SetDate(i, j, new DayInfo { date = firstDayOfWeek.AddDays(i * 7 + j) });
+                    }
                 }
+
+                cal.SetTitle(firstDay.ToString("MMMM yyyy"));
             }
-
-            cal.SetMonth(firstDay.ToString("MMMM yyyy"));
-
-            RefreshFeed(cal);
+            else if (_DateMonth == _InitialDate)
+            {
+                cal.SetTitle("Today's Agenda");
+            }
+            else
+            {
+                cal.SetTitle("Tomorrow's Agenda");
+            }
+            RefreshFeed(cal, data);
         }
 
         public void Initialize(ICalendarView cal, DateTime dateMonth)
         {
             _InitialDate = dateMonth;
-            Refresh(cal, dateMonth);
+            Refresh(cal, new CalendarData( dateMonth, CalendarMode.Month));
         }
 
         public string FormatCell(DayInfo info, out Color color)
@@ -85,10 +102,17 @@ namespace CalendarScreenSaver
             return info.date.Day.ToString() + Environment.NewLine + string.Join(Environment.NewLine, info.eventList);
         }
 
-        public void RefreshFeed(ICalendarView calendar)
+        public void RefreshFeed(ICalendarView calendar, CalendarData data)
         {
-            var calFeed = _Service.QueryData( _DateMonth.AddDays(-28), _DateMonth.AddMonths(1));
+            EventFeed calFeed;
+            if (data.mode == CalendarMode.Month)
+                calFeed = _Service.QueryData( _DateMonth.AddDays(-28), _DateMonth.AddMonths(1));
+            else
+                calFeed = _Service.QueryData(data.date, data.date.AddDays(1));
 
+            if (calFeed == null || calFeed.Entries.Count == 0)
+                calendar.AddAgendaItem(_DateMonth, "No agenda items", true);
+            
             // now populate the calendar
             while (calFeed != null && calFeed.Entries.Count > 0)
             {
@@ -98,7 +122,10 @@ namespace CalendarScreenSaver
 
                 foreach (var item in items)
                 {
-                    calendar.AddEvent(item.StartTime, item.Text, item.AllDay);
+                    if (data.mode == CalendarMode.Month)
+                        calendar.AddEvent(item.StartTime, item.Text, item.AllDay);
+                    else
+                        calendar.AddAgendaItem(item.StartTime, item.Text, item.AllDay);
                 }
 
                 calFeed = _Service.Next(calFeed);
@@ -109,13 +136,34 @@ namespace CalendarScreenSaver
 
         public void TimerFired(ICalendarView calendar)
         {
-            int addMonths = 0;
-            if (_InitialDate.Month == _DateMonth.Month)
-                addMonths = 1;
-            Refresh(calendar, _InitialDate.AddMonths(addMonths));
+            CalendarData data;
+            if (calendar.Mode == CalendarMode.Month && _DateMonth.Month == _InitialDate.Month)
+                data = new CalendarData( _InitialDate.AddMonths(1), CalendarMode.Month);
+            else if (calendar.Mode == CalendarMode.Month)
+                data = new CalendarData( _InitialDate, CalendarMode.Day);
+            else if (calendar.Mode == CalendarMode.Day && _DateMonth == _InitialDate)
+                data = new CalendarData( _InitialDate.AddDays(1), CalendarMode.Day);
+            else
+                data = new CalendarData( _InitialDate, CalendarMode.Month);
+ 
+            Refresh(calendar, data);
+            
         }
 
     }
+
+    public struct CalendarData
+    {
+        public CalendarData ( DateTime dt, CalendarMode md)
+	{
+            date = dt;
+            mode = md;
+	}
+        public readonly DateTime date;
+        public readonly CalendarMode mode;
+    }
+
+
 
     public interface ICalendarService
     {

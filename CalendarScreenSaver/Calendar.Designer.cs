@@ -42,6 +42,7 @@ namespace CalendarScreenSaver
             this.Saturday = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.lblMonthName = new System.Windows.Forms.Label();
             this.timer1 = new System.Windows.Forms.Timer(this.components);
+            this.lvDay = new System.Windows.Forms.ListView();
             ((System.ComponentModel.ISupportInitialize)(this.gridCalendar)).BeginInit();
             this.SuspendLayout();
             // 
@@ -153,12 +154,26 @@ namespace CalendarScreenSaver
             this.timer1.Interval = 300000;
             this.timer1.Tick += new System.EventHandler(this.timer1_Tick);
             // 
+            // lvDay
+            // 
+            this.lvDay.BackColor = System.Drawing.SystemColors.WindowText;
+            this.lvDay.Font = new System.Drawing.Font("Microsoft Sans Serif", 14.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.lvDay.ForeColor = System.Drawing.Color.LawnGreen;
+            this.lvDay.HoverSelection = true;
+            this.lvDay.Location = new System.Drawing.Point(253, 121);
+            this.lvDay.Name = "lvDay";
+            this.lvDay.Size = new System.Drawing.Size(280, 194);
+            this.lvDay.TabIndex = 2;
+            this.lvDay.UseCompatibleStateImageBehavior = false;
+            this.lvDay.View = System.Windows.Forms.View.List;
+            // 
             // Calendar
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.Color.Black;
             this.ClientSize = new System.Drawing.Size(793, 507);
+            this.Controls.Add(this.lvDay);
             this.Controls.Add(this.lblMonthName);
             this.Controls.Add(this.gridCalendar);
             this.ForeColor = System.Drawing.Color.LawnGreen;
@@ -187,6 +202,7 @@ namespace CalendarScreenSaver
         private DataGridViewTextBoxColumn Saturday;
         private Label lblMonthName;
         private Timer timer1;
+        private ListView lvDay;
     }
 }
 

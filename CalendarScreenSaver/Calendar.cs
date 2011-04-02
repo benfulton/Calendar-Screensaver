@@ -22,15 +22,21 @@ namespace CalendarScreenSaver
             InitializeComponent();
 
             this.Bounds = bounds;
+            lvDay.Bounds = gridCalendar.Bounds;
 
             _Controller = new CalendarController(new CalendarService(new Settings()));
             _Controller.Initialize(this, DateTime.Today);
 
             gridCalendar.ClearSelection();
+
+#if DEBUG
+            timer1.Interval = 10000;
+#endif
         }
 
         public void Clear()
         {
+            lvDay.Clear();
             gridCalendar.Rows.Clear();
             gridCalendar.Rows.Add(6);
             foreach (DataGridViewRow row in gridCalendar.Rows)
@@ -38,14 +44,39 @@ namespace CalendarScreenSaver
                 row.Height = 110;
             }
         }
-        public void SetMonth(string month)
+        public void SetTitle(string month)
         {
             lblMonthName.Text = month;
+        }
+
+        public CalendarMode Mode
+        {
+            get
+            {
+                return gridCalendar.Visible ? CalendarMode.Month : CalendarMode.Day;
+            }
+            set
+            {
+                gridCalendar.Visible = value == CalendarMode.Month;
+                lvDay.Visible = value == CalendarMode.Day;
+            }
         }
 
         public void SetDate( int row, int col, DayInfo info)
         {
             gridCalendar.Rows[row].Cells[col].Value = info;
+        }
+
+        public void AddAgendaItem(DateTime dateTime, string text, bool isAllDay)
+        {
+            lvDay.Items.Add( GetLineItem(dateTime, text, isAllDay));
+        }
+
+        private static string GetLineItem(DateTime date, string text, bool isAllDay)
+        {
+            string formatted = isAllDay ? "" : date.ToShortTimeString() + ": ";
+            string lineItem = formatted + text;
+            return lineItem;
         }
 
         public void AddEvent(DateTime date, string text, bool isAllDay)
@@ -55,8 +86,8 @@ namespace CalendarScreenSaver
             if (index >= 0 && index < 41)
             {
                 var info = gridCalendar.Rows[index / 7].Cells[index % 7].Value as DayInfo;
-                string formatted = isAllDay ? "" : date.ToShortTimeString() + ": ";
-                info.eventList.Add(formatted + text);
+                string lineItem = GetLineItem(date, text, isAllDay);
+                info.eventList.Add(lineItem);
             }
         }
 
@@ -69,10 +100,13 @@ namespace CalendarScreenSaver
         {
             Color c;
             var info = e.Value as DayInfo;
-            e.Value = _Controller.FormatCell(info, out c);
-            e.FormattingApplied = true;
-            e.CellStyle.ForeColor = c;
-            e.CellStyle.WrapMode = DataGridViewTriState.True;
+            if (info != null)
+            {
+                e.Value = _Controller.FormatCell(info, out c);
+                e.FormattingApplied = true;
+                e.CellStyle.ForeColor = c;
+                e.CellStyle.WrapMode = DataGridViewTriState.True;
+            }
         }
 
         public void StartTimer()
